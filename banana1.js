@@ -6,7 +6,10 @@ const CLOSE_BRACKET = ')';
 
 
 function main() {
-    const result = execute_exprs(GlobalScope, parse_exprs(lex("(+ 1 (* 2 3))")));
+    const text = "(+ 1 (* 2 3))";
+    const tokens = lex(text);
+    const ast = parse_exprs(tokens)
+    const result = execute_exprs(GlobalScope, ast);
     console.log("RESULT:", result);
 }
 
