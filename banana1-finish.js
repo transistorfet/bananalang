@@ -1,14 +1,18 @@
 
-const fs = require('fs');
-
 const OPEN_BRACKET = '(';
 const CLOSE_BRACKET = ')';
 
 
+const text = `
+    (+ 1 (* 2 3))
+`;
+
 function main() {
-    const text = "(+ 1 (* 2 3))";
     const tokens = lex(text);
+    console.log("TOKENS:", tokens);
     const ast = parse_exprs(tokens)
+    console.log("AST:");
+    print_exprs(ast);
     const result = execute_exprs(GlobalScope, ast);
     console.log("RESULT:", result);
 }
@@ -26,8 +30,8 @@ function lex(text) {
 
     text = text.trimLeft();
     while (text !== '') {
-        const token = read_token(text);
-        text = text.substr(token.length).trimLeft();
+        const [ token, remain ] = read_token(text);
+        text = remain.trimLeft();
         tokens.push(token);
     }
 
@@ -37,12 +41,12 @@ function lex(text) {
 function read_token(text) {
     switch (text[0]) {
         case '(':
-            return OPEN_BRACKET;
+            return [ OPEN_BRACKET, text.substr(1) ];
         case ')':
-            return CLOSE_BRACKET;
+            return [ CLOSE_BRACKET, text.substr(1) ];
         default:
             const parts = text.match(/^([^ \n\r\t\)])+/);
-            return parts[0];
+            return [ parts[0], text.substr(parts[0].length) ];
     }
 }
 
@@ -118,6 +122,38 @@ function parse_expr(tokens) {
 
 /****************************************************
  *                                                  *
+ * AST Pretty Printer                               *
+ *                                                  *
+ ****************************************************/
+
+function print_exprs(exprs, indent='') {
+    for (let expr of exprs) {
+        print_expr(expr, indent);
+    }
+}
+
+function print_expr(expr, indent) {
+    switch (expr.type) {
+        case 'number':
+            console.log(indent, expr.value);
+            break;
+        case 'ref':
+            console.log(indent, expr.value);
+            break;
+        case 'expr':
+            console.log(indent, '(');
+            print_exprs(expr.elements, indent + '  ');
+            console.log(indent, ')');
+            break;
+        default:
+            break;
+    }
+}
+
+
+
+/****************************************************
+ *                                                  *
  * Executor                                         *
  *                                                  *
  ****************************************************/
@@ -138,7 +174,7 @@ function execute_expr(scope, expr) {
             return expr.value;
         case 'ref':
             console.log("REF", expr.value);
-            return find_ref(scope, expr.value);
+            return scope[expr.value];
         case 'expr':
             const args = execute_exprs(scope, expr.elements);
             const func = args.shift();
@@ -153,38 +189,12 @@ function execute_expr(scope, expr) {
     }
 }
 
-function find_ref(scope, name) {
-    if (scope[name] !== undefined) {
-        return scope[name];
-    } else if (scope['__parent__'] !== undefined) {
-        return find_ref(scope['__parent__'], name);
-    } else {
-        return null;
-    }
-}
-
 
 /****************************************************
  *                                                  *
  * Environment                                      *
  *                                                  *
  ****************************************************/
-
-function expect_ref(expr) {
-    if (expr.type === 'ref') {
-        return expr.value;
-    } else {
-        throw new Exception(`Error: expected ref but found ${expr.type}`);
-    }
-}
-
-function expect_nargs(elements, min, max) {
-    if (elements.length >= min && (!max || elements.length <= max)) {
-        return true;
-    } else {
-        throw new Exception(`Error: expected ${min} to ${max} args but found ${elements.length}`);
-    }
-}
 
 const GlobalScope = {
     '+': function (scope, args) {

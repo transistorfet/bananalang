@@ -32,8 +32,8 @@ function lex(text) {
 
     text = text.trimLeft();
     while (text !== '') {
-        const token = read_token(text);
-        text = text.substr(token.length).trimLeft();
+        const [ token, remain ] = read_token(text);
+        text = remain.trimLeft();
         tokens.push(token);
     }
 
@@ -43,13 +43,12 @@ function lex(text) {
 function read_token(text) {
     switch (text[0]) {
         case '(':
-            return OPEN_BRACKET;
+            return [ OPEN_BRACKET, text.substr(1) ];
         case ')':
-            return CLOSE_BRACKET;
-        //case '\"':
+            return [ CLOSE_BRACKET, text.substr(1) ];
         default:
             const parts = text.match(/^([^ \n\r\t\)])+/);
-            return parts[0];
+            return [ parts[0], text.substr(parts[0].length) ];
     }
 }
 
@@ -119,6 +118,38 @@ function parse_expr(tokens) {
     }
 
     throw new Exception(`ParseError: unexpected end of input, expected close bracket`);
+}
+
+
+
+/****************************************************
+ *                                                  *
+ * AST Pretty Printer                               *
+ *                                                  *
+ ****************************************************/
+
+function print_exprs(exprs, indent='') {
+    for (let expr of exprs) {
+        print_expr(expr, indent);
+    }
+}
+
+function print_expr(expr, indent) {
+    switch (expr.type) {
+        case 'number':
+            console.log(indent, expr.value);
+            break;
+        case 'ref':
+            console.log(indent, expr.value);
+            break;
+        case 'expr':
+            console.log(indent, '(');
+            print_exprs(expr.elements, indent + '  ');
+            console.log(indent, ')');
+            break;
+        default:
+            break;
+    }
 }
 
 
