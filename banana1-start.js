@@ -71,7 +71,7 @@ function parse_exprs(tokens) {
             exprs.push(result);
             tokens = remain;
         } else {
-            throw new Exception(`ParseError: unexpected end of input, expected close bracket`);
+            throw new Error(`ParseError: unexpected end of input, expected close bracket`);
         }
     }
 
@@ -113,11 +113,11 @@ function parse_expr(tokens) {
             });
 
         } else {
-            throw new Exception(`ParseError: expected ref but found ${token}`);
+            throw new Error(`ParseError: expected ref but found ${token}`);
         }
     }
 
-    throw new Exception(`ParseError: unexpected end of input, expected close bracket`);
+    throw new Error(`ParseError: unexpected end of input, expected close bracket`);
 }
 
 

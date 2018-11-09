@@ -10,9 +10,11 @@ const text = `
 function main() {
     const tokens = lex(text);
     console.log("TOKENS:", tokens);
+
     const ast = parse_exprs(tokens)
     console.log("AST:");
     print_exprs(ast);
+
     const result = execute_exprs(GlobalScope, ast);
     console.log("RESULT:", result);
 }
@@ -69,7 +71,7 @@ function parse_exprs(tokens) {
             exprs.push(result);
             tokens = remain;
         } else {
-            throw new Exception(`ParseError: unexpected end of input, expected close bracket`);
+            throw new Error(`ParseError: unexpected end of input, expected close bracket`);
         }
     }
 
@@ -111,11 +113,11 @@ function parse_expr(tokens) {
             });
 
         } else {
-            throw new Exception(`ParseError: expected ref but found ${token}`);
+            throw new Error(`ParseError: expected ref but found ${token}`);
         }
     }
 
-    throw new Exception(`ParseError: unexpected end of input, expected close bracket`);
+    throw new Error(`ParseError: unexpected end of input, expected close bracket`);
 }
 
 
@@ -182,10 +184,10 @@ function execute_expr(scope, expr) {
             if (typeof func === 'function') {
                 return func(scope, args);
             } else {
-                throw new Exception(`RuntimeError: attempting to call a non-function: ${func}`);
+                throw new Error(`RuntimeError: attempting to call a non-function: ${func}`);
             }
         default:
-            throw new Exception(`RuntimeError: invalid ast element ${expr.type}`);
+            throw new Error(`RuntimeError: invalid ast element ${expr.type}`);
     }
 }
 

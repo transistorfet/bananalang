@@ -6,17 +6,18 @@ const CLOSE_BRACKET = ')';
 
 
 function main() {
-    /*
     const text = fs.readFileSync('test.lsp', 'utf8');
+
     const tokens = lex(text);
     console.log("TOKENS", tokens);
+
     const ast = parse_exprs(tokens);
     console.dir(ast, { depth: null });
-    execute_exprs(GlobalScope, ast);
-    */
 
-    const result = execute_exprs(GlobalScope, parse_exprs(lex("(if 1 (+ 1 2) (+ 1 (* 2 3)))")));
-    console.log("RESULT:", result);
+    execute_exprs(GlobalScope, ast);
+
+    //const result = execute_exprs(GlobalScope, parse_exprs(lex("(if 1 (+ 1 2) (+ 1 (* 2 3)))")));
+    //console.log("RESULT:", result);
 }
 
 
@@ -71,7 +72,7 @@ function parse_exprs(tokens) {
             exprs.push(result);
             tokens = remain;
         } else {
-            throw new Exception(`ParseError: unexpected end of input, expected close bracket`);
+            throw new Error(`ParseError: unexpected end of input, expected close bracket`);
         }
     }
 
@@ -113,11 +114,11 @@ function parse_expr(tokens) {
             });
 
         } else {
-            throw new Exception(`ParseError: expected ref but found ${token}`);
+            throw new Error(`ParseError: expected ref but found ${token}`);
         }
     }
 
-    throw new Exception(`ParseError: unexpected end of input, expected close bracket`);
+    throw new Error(`ParseError: unexpected end of input, expected close bracket`);
 }
 
 
@@ -189,11 +190,11 @@ function execute_expr(scope, expr) {
                 if (typeof func === 'function') {
                     return func(scope, args);
                 } else {
-                    throw new Exception(`RuntimeError: attempting to call a non-function: ${func}`);
+                    throw new Error(`RuntimeError: attempting to call a non-function: ${func}`);
                 }
             }
         default:
-            throw new Exception(`RuntimeError: invalid ast element ${expr.type}`);
+            throw new Error(`RuntimeError: invalid ast element ${expr.type}`);
     }
 }
 
@@ -218,7 +219,15 @@ function expect_ref(expr) {
     if (expr.type === 'ref') {
         return expr.value;
     } else {
-        throw new Exception(`Error: expected ref but found ${expr.type}`);
+        throw new Error(`Error: expected ref but found ${expr.type}`);
+    }
+}
+
+function expect_expr(expr) {
+    if (expr.type === 'expr') {
+        return expr.elements;
+    } else {
+        throw new Error(`Error: expected expr but found ${expr.type}`);
     }
 }
 
@@ -226,7 +235,7 @@ function expect_nargs(elements, min, max) {
     if (elements.length >= min && (!max || elements.length <= max)) {
         return true;
     } else {
-        throw new Exception(`Error: expected ${min} to ${max} args but found ${elements.length}`);
+        throw new Error(`Error: expected ${min} to ${max} args but found ${elements.length}`);
     }
 }
 
@@ -245,11 +254,29 @@ const SpecialForms = {
     'defun': function (scope, elements) {
         expect_nargs(elements, 3);
 
-        const name = expect_ref(elements[0]);
-        const args = elements[1];
-        const body = elements[2];
+        const func_name = expect_ref(elements[0]);
+        const arg_names = expect_expr(elements[1]);
+        const body = elements[2];   // TODO should be the remaining elements
 
-        execute_expr(scope, body);
+        if (scope[func_name]) {
+            throw new Error(`RuntimeError: ${func_name} is already defined`);
+        }
+
+        scope[func_name] = function (caller_scope, args) {
+            const local = { '__parent__': scope };
+
+console.log(arg_names, args);
+            if (arg_names.length !== args.length) {
+                throw new Error(`RuntimeError: expected ${arg_names.length} args, but was given ${args.length}`);
+            }
+
+            for (let i = 0; i < args.length; i++) {
+                const name = expect_ref(arg_names[i]);
+                local[name] = args[i];
+            }
+
+            return execute_expr(local, body);
+        };
     },
 };
 
