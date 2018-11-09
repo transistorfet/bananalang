@@ -11,11 +11,12 @@ function main() {
     const tokens = lex(text);
     console.log("TOKENS:", tokens);
 
-    const ast = parse_exprs(tokens)
+    const ast = parse_exprs(tokens);
     console.log("AST:");
+    console.dir(ast, { depth: null });
     print_exprs(ast);
 
-    const result = execute_exprs(GlobalScope, ast);
+    const result = evaluate_exprs(GlobalScope, ast);
     console.log("RESULT:", result);
 }
 
@@ -156,29 +157,27 @@ function print_expr(expr, indent) {
 
 /****************************************************
  *                                                  *
- * Executor                                         *
+ * Evaluator                                        *
  *                                                  *
  ****************************************************/
 
-function execute_exprs(scope, exprs) {
+function evaluate_exprs(scope, exprs) {
     const results = [];
 
     for (let expr of exprs) {
-        results.push( execute_expr(scope, expr));
+        results.push( evaluate_expr(scope, expr));
     }
     return results;
 }
 
-function execute_expr(scope, expr) {
+function evaluate_expr(scope, expr) {
     switch (expr.type) {
         case 'number':
-            console.log("NUMBER", expr.value);
             return expr.value;
         case 'ref':
-            console.log("REF", expr.value);
             return scope[expr.value];
         case 'expr':
-            const args = execute_exprs(scope, expr.elements);
+            const args = evaluate_exprs(scope, expr.elements);
             const func = args.shift();
 
             if (typeof func === 'function') {
@@ -208,6 +207,7 @@ const GlobalScope = {
 
         return sum;
     },
+
     '*': function (scope, args) {
         let prod = args[0];
 

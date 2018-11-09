@@ -9,15 +9,14 @@ function main() {
     const text = fs.readFileSync('test.lsp', 'utf8');
 
     const tokens = lex(text);
-    console.log("TOKENS", tokens);
+    //console.log("TOKENS:", tokens);
 
     const ast = parse_exprs(tokens);
-    console.dir(ast, { depth: null });
+    //console.log("AST:");
+    //console.dir(ast, { depth: null });
 
-    execute_exprs(GlobalScope, ast);
-
-    //const result = execute_exprs(GlobalScope, parse_exprs(lex("(if 1 (+ 1 2) (+ 1 (* 2 3)))")));
-    //console.log("RESULT:", result);
+    const result = evaluate_exprs(GlobalScope, ast);
+    console.log("RESULT:", result);
 }
 
 
@@ -157,34 +156,41 @@ function print_expr(expr, indent) {
 
 /****************************************************
  *                                                  *
- * Executor                                         *
+ * Evaluator                                        *
  *                                                  *
  ****************************************************/
 
-function execute_exprs(scope, exprs) {
+function evaluate_exprs(scope, exprs) {
+    let last;
+
+    for (let expr of exprs) {
+        last = evaluate_expr(scope, expr);
+    }
+    return last;
+}
+
+function evaluate_expr_list(scope, exprs) {
     const results = [];
 
     for (let expr of exprs) {
-        results.push( execute_expr(scope, expr));
+        results.push( evaluate_expr(scope, expr));
     }
     return results;
 }
 
-function execute_expr(scope, expr) {
+function evaluate_expr(scope, expr) {
     switch (expr.type) {
         case 'number':
-            console.log("NUMBER", expr.value);
             return expr.value;
         case 'ref':
-            console.log("REF", expr.value);
             return find_ref(scope, expr.value);
         case 'expr':
             const first = expr.elements[0];
+
             if (first.type === 'ref' && SpecialForms[first.value]) {
-                console.log("SPECIAL FORM", first.value);
                 return SpecialForms[first.value](scope, expr.elements.slice(1));
             } else {
-                const args = execute_exprs(scope, expr.elements);
+                const args = evaluate_expr_list(scope, expr.elements);
                 const func = args.shift();
 
                 if (typeof func === 'function') {
@@ -243,11 +249,11 @@ const SpecialForms = {
     'if': function (scope, elements) {
         expect_nargs(elements, 2, 3);
 
-        const result = execute_expr(scope, elements[0]);
+        const result = evaluate_expr(scope, elements[0]);
         if (result) {
-            return execute_expr(scope, elements[1]);
+            return evaluate_expr(scope, elements[1]);
         } else if (elements.length === 3) {
-            return execute_expr(scope, elements[2]);
+            return evaluate_expr(scope, elements[2]);
         }
     },
 
@@ -256,7 +262,7 @@ const SpecialForms = {
 
         const func_name = expect_ref(elements[0]);
         const arg_names = expect_expr(elements[1]);
-        const body = elements[2];   // TODO should be the remaining elements
+        const body = elements.slice(2);
 
         if (scope[func_name]) {
             throw new Error(`RuntimeError: ${func_name} is already defined`);
@@ -265,7 +271,6 @@ const SpecialForms = {
         scope[func_name] = function (caller_scope, args) {
             const local = { '__parent__': scope };
 
-console.log(arg_names, args);
             if (arg_names.length !== args.length) {
                 throw new Error(`RuntimeError: expected ${arg_names.length} args, but was given ${args.length}`);
             }
@@ -275,7 +280,7 @@ console.log(arg_names, args);
                 local[name] = args[i];
             }
 
-            return execute_expr(local, body);
+            return evaluate_exprs(local, body);
         };
     },
 };
@@ -290,6 +295,17 @@ const GlobalScope = {
 
         return sum;
     },
+
+    '-': function (scope, args) {
+        let diff = args[0];
+
+        for (let i = 1; i < args.length; i++) {
+            diff -= args[i];
+        }
+
+        return diff;
+    },
+
     '*': function (scope, args) {
         let prod = args[0];
 
@@ -298,6 +314,18 @@ const GlobalScope = {
         }
 
         return prod;
+    },
+
+    '<=': function (scope, args) {
+        let val = args[0];
+
+        for (let i = 1; i < args.length; i++) {
+            if (!(val <= args[i])) {
+                return false;
+            }
+        }
+
+        return true;
     },
 };
 
