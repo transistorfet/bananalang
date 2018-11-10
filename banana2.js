@@ -172,7 +172,7 @@ function evaluate_expr_list(scope, exprs) {
     const results = [];
 
     for (let expr of exprs) {
-        results.push( evaluate_expr(scope, expr));
+        results.push(evaluate_expr(scope, expr));
     }
     return results;
 }
