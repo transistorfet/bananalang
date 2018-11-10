@@ -128,27 +128,26 @@ function parse_expr(tokens) {
  *                                                  *
  ****************************************************/
 
-function print_exprs(exprs, indent='') {
+function print_exprs(exprs) {
+    const output = [];
+
     for (let expr of exprs) {
-        print_expr(expr, indent);
+        output.push(print_expr(expr));
     }
+    return output.join(' ');
 }
 
 function print_expr(expr, indent) {
     switch (expr.type) {
         case 'number':
-            console.log(indent, expr.value);
-            break;
+            return expr.value.toString();
         case 'ref':
-            console.log(indent, expr.value);
-            break;
+            return expr.value;
         case 'expr':
             console.log(indent, '(');
-            print_exprs(expr.elements, indent + '  ');
-            console.log(indent, ')');
-            break;
+            return '(' + print_exprs(expr.elements) + ')';
         default:
-            break;
+            return '';
     }
 }
 
