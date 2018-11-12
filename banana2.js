@@ -144,7 +144,6 @@ function print_expr(expr, indent) {
         case 'ref':
             return expr.value;
         case 'expr':
-            console.log(indent, '(');
             return '(' + print_exprs(expr.elements) + ')';
         default:
             return '';
