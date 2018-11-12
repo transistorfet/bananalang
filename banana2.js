@@ -137,7 +137,7 @@ function print_exprs(exprs) {
     return output.join(' ');
 }
 
-function print_expr(expr, indent) {
+function print_expr(expr) {
     switch (expr.type) {
         case 'number':
             return expr.value.toString();
@@ -305,9 +305,9 @@ const GlobalScope = {
     },
 
     '*': function (scope, args) {
-        let prod = args[0];
+        let prod = 1;
 
-        for (let i = 1; i < args.length; i++) {
+        for (let arg of args) {
             prod *= args[i];
         }
 

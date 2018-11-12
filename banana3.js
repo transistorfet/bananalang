@@ -144,7 +144,7 @@ function print_exprs(exprs) {
     return output.join(' ');
 }
 
-function print_expr(expr, indent) {
+function print_expr(expr) {
     switch (expr.type) {
         case 'number':
             return expr.value.toString();
