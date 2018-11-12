@@ -73,7 +73,7 @@ function parse_exprs(tokens) {
             exprs.push(result);
             tokens = remain;
         } else {
-            throw new Error(`ParseError: unexpected end of input, expected close bracket`);
+            throw new Error(`ParseError: expected open bracket but found ${token}`);
         }
     }
 
@@ -192,7 +192,7 @@ const GlobalScope = {
         let prod = 1;
 
         for (let arg of args) {
-            prod *= args[i];
+            prod *= arg;
         }
 
         return prod;
