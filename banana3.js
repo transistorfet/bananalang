@@ -1,9 +1,6 @@
 
 const fs = require('fs');
 
-const OPEN_BRACKET = '(';
-const CLOSE_BRACKET = ')';
-
 
 function main() {
     //const text = fs.readFileSync('test.lsp', 'utf8');
@@ -33,6 +30,9 @@ function main() {
  * Lexer                                            *
  *                                                  *
  ****************************************************/
+
+const OPEN_BRACKET = '(';
+const CLOSE_BRACKET = ')';
 
 function lex(text) {
     const tokens = [];

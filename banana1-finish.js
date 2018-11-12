@@ -1,7 +1,4 @@
 
-const OPEN_BRACKET = '(';
-const CLOSE_BRACKET = ')';
-
 
 const text = `
     (+ 1 (* 2 3))
@@ -28,6 +25,9 @@ function main() {
  * Lexer                                            *
  *                                                  *
  ****************************************************/
+
+const OPEN_BRACKET = '(';
+const CLOSE_BRACKET = ')';
 
 function lex(text) {
     const tokens = [];
