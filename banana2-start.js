@@ -216,7 +216,7 @@ function find_ref(scope, name) {
     } else if (scope['__parent__'] !== undefined) {
         return find_ref(scope['__parent__'], name);
     } else {
-        return null;
+        throw new Error(`RuntimeError: undefined reference ${name}`);
     }
 }
 
