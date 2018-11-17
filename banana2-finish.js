@@ -1,10 +1,24 @@
 
-const fs = require('fs');
 
+/*
+const text = `
+    (if 1
+        (print 10)
+        (print 20))
+`;
+*/
+
+const text = `
+    (define fac
+        (lambda (x)
+            (if (= x 0)
+                1
+                (* x (fac (- x 1))))))
+
+    (fac 4)
+`;
 
 function main() {
-    const text = fs.readFileSync('test.lsp', 'utf8');
-
     const tokens = lex(text);
     //console.log("TOKENS:", tokens);
 
@@ -255,18 +269,26 @@ const SpecialForms = {
         }
     },
 
-    'defun': function (scope, elements) {
-        expect_nargs(elements, 3);
+    'define': function (scope, elements) {
+        expect_nargs(elements, 2, 2);
 
         const func_name = expect_ref(elements[0]);
-        const arg_names = expect_expr(elements[1]);
-        const body = elements.slice(2);
+        const value_expr = elements[1];
 
         if (scope[func_name]) {
             throw new Error(`RuntimeError: ${func_name} is already defined`);
         }
 
-        scope[func_name] = function (caller_scope, args) {
+        scope[func_name] = evaluate_expr(scope, value_expr);
+    },
+
+    'lambda': function (scope, elements) {
+        expect_nargs(elements, 2);
+
+        const arg_names = expect_expr(elements[0]);
+        const body = elements.slice(1);
+
+        return function (caller_scope, args) {
             const local = { '__parent__': scope };
 
             if (arg_names.length !== args.length) {
@@ -314,16 +336,20 @@ const GlobalScope = {
         return prod;
     },
 
-    '<=': function (scope, args) {
+    '=': function (scope, args) {
         let val = args[0];
 
         for (let i = 1; i < args.length; i++) {
-            if (!(val <= args[i])) {
+            if (!(val == args[i])) {
                 return false;
             }
         }
 
         return true;
+    },
+
+    'print': function (scope, args) {
+        console.log.apply(null, args);
     },
 };
 
