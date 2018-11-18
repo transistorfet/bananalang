@@ -1,13 +1,12 @@
 
 
-const text = `
+const text1 = `
     (if 1
         (print 10)
         (print 20))
 `;
 
-/*
-const text = `
+const text2 = `
     (define fac
         (lambda (x)
             (if (= x 0)
@@ -16,10 +15,9 @@ const text = `
 
     (fac 4)
 `;
-*/
 
 function main() {
-    const tokens = lex(text);
+    const tokens = lex(text1);
     //console.log("TOKENS:", tokens);
 
     const ast = parse_exprs(tokens);

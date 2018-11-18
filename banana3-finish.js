@@ -1,15 +1,14 @@
 
-//const text = "(+ 1 (* 2 3))";
+const text1 = "(+ 1 (* 2 3))";
 
-const text = `
+const text2 = `
     (define loop
         (lambda ()
             (loop)))
     (loop)
 `;
 
-/*
-const text = `
+const text3 = `
     (define fac
         (lambda (x)
             (if (= x 0)
@@ -19,7 +18,7 @@ const text = `
     (fac 4)
 `;
 
-const text = `
+const text4 = `
     (define fac2
         (lambda (x r)
             (if (= x 0)
@@ -28,17 +27,17 @@ const text = `
 
     (fac2 4 1)
 `;
-*/
+
 
 function main() {
-    const tokens = lex(text);
+    const tokens = lex(text4);
     //console.log("TOKENS:", tokens);
 
     const ast = parse_exprs(tokens);
     //console.log("AST:");
     //console.dir(ast, { depth: null });
 
-    const result = evaluate_loop(GlobalScope, [], ast, 0);
+    const result = evaluate_loop(GlobalScope, ast, 0);
     console.log("RESULT:", result);
 }
 
@@ -184,10 +183,10 @@ function print_expr(expr) {
  *                                                  *
  ****************************************************/
 
-function evaluate_loop(scope, todo, exprs, depth) {
+function evaluate_loop(scope, exprs, depth) {
     let acc;
 
-    todo = queue_exprs(scope, todo, exprs, depth + 1);
+    let todo = queue_exprs(scope, [], exprs, depth + 1);
 
     while (todo.length > 0) {
         const step = todo.shift();
