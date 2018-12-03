@@ -3,9 +3,10 @@ const text1 = "(+ 1 (* 2 3))";
 
 const text2 = `
     (define loop
-        (lambda ()
-            (loop)))
-    (loop)
+        (lambda (x)
+            (print x)
+            (loop (+ x 1))))
+    (loop 1)
 `;
 
 const text3 = `
@@ -20,7 +21,7 @@ const text3 = `
 
 
 function main() {
-    const tokens = lex(text3);
+    const tokens = lex(text2);
     //console.log("TOKENS:", tokens);
 
     const ast = parse_exprs(tokens);
@@ -200,7 +201,7 @@ function evaluate_expr_list(scope, exprs, depth) {
 }
 
 function evaluate_expr(scope, expr, depth) {
-    console.log('*'.repeat(depth), depth, expr.elements ? expr.elements[0].value : '');
+    //console.log('*'.repeat(depth), depth, expr.elements ? expr.elements[0].value : '');
 
     switch (expr.type) {
         case 'number':

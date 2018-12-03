@@ -3,9 +3,10 @@ const text1 = "(+ 1 (* 2 3))";
 
 const text2 = `
     (define loop
-        (lambda ()
-            (loop)))
-    (loop)
+        (lambda (x)
+            (print x)
+            (loop (+ x 1))))
+    (loop 1)
 `;
 
 const text3 = `
@@ -30,7 +31,7 @@ const text4 = `
 
 
 function main() {
-    const tokens = lex(text4);
+    const tokens = lex(text2);
     //console.log("TOKENS:", tokens);
 
     const ast = parse_exprs(tokens);
