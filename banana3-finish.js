@@ -235,11 +235,7 @@ function queue_expr_list(scope, todo, exprs, depth) {
         const func = args.shift();
 
         if (typeof func === 'function') {
-            if (func.isStep) {
-                return func(scope, args, todo, depth + 1);
-            } else {
-                return [ func(scope, args, depth + 1), todo ];
-            }
+            return func(scope, args, todo, depth + 1);
         } else {
             throw new Error(`RuntimeError: attempting to call a non-function: ${func}`);
         }
@@ -314,9 +310,10 @@ function expect_nargs(elements, min, max) {
 
 const SpecialForms = {
     'if': function (scope, todo, elements, depth) {
-        expect_nargs(elements, 2, 3);
+        expect_nargs(elements, 3, 3);
 
         const batch = queue_expr(scope, [], elements[0], depth + 1);
+
         batch.push(function compare(todo, acc, depth) {
             if (acc) {
                 return [ undefined, queue_expr(scope, todo, elements[1], depth + 1) ];
@@ -356,6 +353,7 @@ const SpecialForms = {
         const body = elements.slice(1);
 
         const batch = [];
+
         batch.push((todo) => {
             function lambda(caller_scope, args, todo, depth) {
                 const local = { '__parent__': scope };
@@ -372,8 +370,6 @@ const SpecialForms = {
                 return [ undefined, queue_exprs(local, todo, body, depth + 1) ];
             };
 
-            lambda.isStep = true;
-
             return [ lambda, todo ];
         });
 
@@ -382,37 +378,37 @@ const SpecialForms = {
 };
 
 const GlobalScope = {
-    '+': function (scope, args) {
+    '+': function (scope, args, todo) {
         let sum = 0;
 
         for (let arg of args) {
             sum += arg;
         }
 
-        return sum;
+        return [ sum, todo ];
     },
 
-    '-': function (scope, args) {
+    '-': function (scope, args, todo) {
         let diff = args[0];
 
         for (let i = 1; i < args.length; i++) {
             diff -= args[i];
         }
 
-        return diff;
+        return [ diff, todo ];
     },
 
-    '*': function (scope, args) {
+    '*': function (scope, args, todo) {
         let prod = 1;
 
         for (let arg of args) {
             prod *= arg;
         }
 
-        return prod;
+        return [ prod, todo ];
     },
 
-    '=': function (scope, args) {
+    '=': function (scope, args, todo) {
         let val = args[0];
 
         for (let i = 1; i < args.length; i++) {
@@ -421,11 +417,12 @@ const GlobalScope = {
             }
         }
 
-        return true;
+        return [ true, todo ];
     },
 
-    'print': function (scope, args) {
+    'print': function (scope, args, todo) {
         console.log.apply(null, args);
+        return [ undefined, todo ];
     },
 };
 

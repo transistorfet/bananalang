@@ -264,7 +264,7 @@ function expect_nargs(elements, min, max) {
 
 const SpecialForms = {
     'if': function (scope, elements, depth) {
-        expect_nargs(elements, 2, 3);
+        expect_nargs(elements, 3, 3);
 
         const result = evaluate_expr(scope, elements[0], depth + 1);
         if (result) {
