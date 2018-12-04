@@ -211,7 +211,7 @@ function queue_exprs(scope, todo, exprs, depth) {
     return batch.concat(todo);
 }
 
-function queue_expr_list(scope, todo, exprs, depth) {
+function queue_func_call(scope, todo, exprs, depth) {
     const batch = [];
     const args = [];
 
@@ -260,7 +260,7 @@ function queue_expr(scope, todo, expr, depth) {
             if (first.type === 'ref' && SpecialForms[first.value]) {
                 return SpecialForms[first.value](scope, todo, expr.elements.slice(1), depth + 1);
             } else {
-                return queue_expr_list(scope, todo, expr.elements, depth + 1);
+                return queue_func_call(scope, todo, expr.elements, depth + 1);
             }
         default:
             throw new Error(`RuntimeError: invalid ast element ${expr.type}`);

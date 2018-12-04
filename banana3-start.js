@@ -183,7 +183,7 @@ function evaluate_exprs(scope, exprs, depth) {
     return last;
 }
 
-function evaluate_expr_list(scope, exprs, depth) {
+function evaluate_func_call(scope, exprs, depth) {
     const args = [];
 
     for (let expr of exprs) {
@@ -214,7 +214,7 @@ function evaluate_expr(scope, expr, depth) {
             if (first.type === 'ref' && SpecialForms[first.value]) {
                 return SpecialForms[first.value](scope, expr.elements.slice(1), depth + 1);
             } else {
-                return evaluate_expr_list(scope, expr.elements, depth + 1);
+                return evaluate_func_call(scope, expr.elements, depth + 1);
             }
         default:
             throw new Error(`RuntimeError: invalid ast element ${expr.type}`);
