@@ -31,7 +31,7 @@ const text4 = `
 
 
 function main() {
-    const tokens = lex(text2);
+    const tokens = lex(text3);
     //console.log("TOKENS:", tokens);
 
     const ast = parse_exprs(tokens);
@@ -413,7 +413,7 @@ const GlobalScope = {
 
         for (let i = 1; i < args.length; i++) {
             if (!(val == args[i])) {
-                return false;
+                return [ false, todo ];
             }
         }
 
