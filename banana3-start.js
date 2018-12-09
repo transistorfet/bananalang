@@ -277,14 +277,17 @@ const SpecialForms = {
     'define': function (scope, elements, depth) {
         expect_nargs(elements, 2, 2);
 
-        const func_name = expect_ref(elements[0]);
-        const value_expr = elements[1];
+        const ref_name = expect_ref(elements[0]);
 
-        if (scope[func_name]) {
-            throw new Error(`RuntimeError: ${func_name} is already defined`);
+        const value = evaluate_expr(scope, elements[1], depth + 1);
+
+        if (scope[ref_name]) {
+            throw new Error(`RuntimeError: ${ref_name} is already defined`);
         }
 
-        scope[func_name] = evaluate_expr(scope, value_expr, depth + 1);
+        scope[ref_name] = value;
+
+        return undefined;
     },
 
     'lambda': function (scope, elements, depth) {
@@ -293,7 +296,7 @@ const SpecialForms = {
         const arg_names = expect_expr(elements[0]);
         const body = elements.slice(1);
 
-        return function (caller_scope, args, depth) {
+        return function lambda_body(caller_scope, args, depth) {
             const local = { '__parent__': scope };
 
             if (arg_names.length !== args.length) {

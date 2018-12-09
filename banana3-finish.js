@@ -193,7 +193,7 @@ function evaluate_loop(scope, exprs, depth) {
         const step = todo.shift();
         [ acc, todo ] = step(todo, acc, depth + 1);
         //console.log("REMAINING", todo.length, todo);
-        console.log("REMAINING", todo.length);
+        console.log("REMAINING", todo.length, todo.length > 0 ? todo[0].name : '');
     }
 
     return acc;
@@ -203,7 +203,7 @@ function queue_exprs(scope, todo, exprs, depth) {
     const batch = [];
 
     for (let expr of exprs) {
-        batch.push(function eval_expr(todo, acc, depth) {
+        batch.push(function do_expr(todo, acc, depth) {
             return [ undefined, queue_expr(scope, todo, expr, depth + 1) ];
         });
     }
@@ -217,21 +217,21 @@ function queue_func_call(scope, todo, exprs, depth) {
 
     for (let expr of exprs) {
         // queue an event to evaluate the expression
-        batch.push(function eval_arg(todo, acc, depth) {
+        batch.push(function do_arg(todo, acc, depth) {
             return [ undefined, queue_expr(scope, todo, expr, depth + 1) ];
         });
 
         // queue an event after the evaluation to push the result onto our arguments list
-        batch.push(function join_arg(todo, acc) {
-            //console.log("JOIN", exprs[0].value, acc);
+        batch.push(function push_arg(todo, acc) {
+            //console.log("PUSH", exprs[0].value, acc);
             args.push(acc);   
-            return [ args, todo ];
+            return [ undefined, todo ];
         });
     }
 
     // queue an event to call the function once all the elements have been evaluated
     batch.push(function call(todo, acc, depth) {
-        console.log("CALL", args, todo.length);
+        //console.log("CALL", args, todo.length);
         const func = args.shift();
 
         if (typeof func === 'function') {
@@ -245,14 +245,18 @@ function queue_func_call(scope, todo, exprs, depth) {
 }
 
 function queue_expr(scope, todo, expr, depth) {
-    console.log('*'.repeat(depth), depth, expr.elements ? expr.elements[0].value : '');
+    //console.log('*'.repeat(depth), depth, expr.elements ? expr.elements[0].value : '');
 
     switch (expr.type) {
         case 'number':
-            todo.unshift((todo) => [ expr.value, todo ]);
+            todo.unshift(function number(todo) {
+                return [ expr.value, todo ];
+            });
             return todo;
         case 'ref':
-            todo.unshift((todo) => [ find_ref(scope, expr.value), todo ]);
+            todo.unshift(function ref(todo) {
+                return [ find_ref(scope, expr.value), todo ];
+            });
             return todo;
         case 'expr':
             const first = expr.elements[0];
@@ -312,9 +316,13 @@ const SpecialForms = {
     'if': function (scope, todo, elements, depth) {
         expect_nargs(elements, 3, 3);
 
-        const batch = queue_expr(scope, [], elements[0], depth + 1);
+        const batch = [];
 
-        batch.push(function compare(todo, acc, depth) {
+        batch.push(function do_expr(todo, acc, depth) {
+            return [ undefined, queue_expr(scope, todo, elements[0], depth + 1) ];
+        });
+
+        batch.push(function do_if(todo, acc, depth) {
             if (acc) {
                 return [ undefined, queue_expr(scope, todo, elements[1], depth + 1) ];
             } else if (elements.length === 3) {
@@ -328,17 +336,21 @@ const SpecialForms = {
     'define': function (scope, todo, elements, depth) {
         expect_nargs(elements, 2, 2);
 
-        const func_name = expect_ref(elements[0]);
+        const ref_name = expect_ref(elements[0]);
 
-        const batch = queue_expr(scope, [], elements[1], depth + 1);
+        const batch = [];
 
-        batch.push(function define(todo, acc) {
-            if (scope[func_name]) {
-                throw new Error(`RuntimeError: ${func_name} is already defined`);
+        batch.push(function do_expr(todo, acc, depth) {
+            return [ undefined, queue_expr(scope, todo, elements[1], depth + 1) ];
+        });
+
+        batch.push(function do_define(todo, acc, depth) {
+            if (scope[ref_name]) {
+                throw new Error(`RuntimeError: ${ref_name} is already defined`);
             }
 
-            console.log("DEFINE", func_name, acc);
-            scope[func_name] = acc;
+            //console.log("DEFINE", ref_name, acc);
+            scope[ref_name] = acc;
 
             return [ undefined, todo ];
         });
@@ -354,8 +366,8 @@ const SpecialForms = {
 
         const batch = [];
 
-        batch.push((todo) => {
-            function lambda(caller_scope, args, todo, depth) {
+        batch.push(function do_lambda_step(todo, acc, depth) {
+            function lambda_body(caller_scope, args, todo, depth) {
                 const local = { '__parent__': scope };
 
                 if (arg_names.length !== args.length) {
@@ -370,7 +382,7 @@ const SpecialForms = {
                 return [ undefined, queue_exprs(local, todo, body, depth + 1) ];
             };
 
-            return [ lambda, todo ];
+            return [ lambda_body, todo ];
         });
 
         return batch.concat(todo);
