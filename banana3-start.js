@@ -296,7 +296,7 @@ const SpecialForms = {
         const arg_names = expect_expr(elements[0]);
         const body = elements.slice(1);
 
-        return function lambda_body(caller_scope, args, depth) {
+        return function call_lambda(caller_scope, args, depth) {
             const local = { '__parent__': scope };
 
             if (arg_names.length !== args.length) {

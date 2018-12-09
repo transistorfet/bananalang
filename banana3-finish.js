@@ -367,7 +367,7 @@ const SpecialForms = {
         const batch = [];
 
         batch.push(function do_lambda_step(todo, acc, depth) {
-            function lambda_body(caller_scope, args, todo, depth) {
+            function call_lambda(caller_scope, args, todo, depth) {
                 const local = { '__parent__': scope };
 
                 if (arg_names.length !== args.length) {
@@ -382,7 +382,7 @@ const SpecialForms = {
                 return [ undefined, queue_exprs(local, todo, body, depth + 1) ];
             };
 
-            return [ lambda_body, todo ];
+            return [ call_lambda, todo ];
         });
 
         return batch.concat(todo);
